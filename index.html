@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>simplesoft</title>
+    <style>
+        body {
+            font-family: "Montserrat", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            margin: 0;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 5px;
+            position: relative;
+            width: 80vw;
+            height: 80vh;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+        }
+
+        .grid-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            color: transparent;
+            font-size: 2em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            overflow: hidden;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease, background-color 0.5s ease;
+            transform: scale(0);
+        }
+
+        .grid-item span {
+            color: white;
+            mix-blend-mode: lighten;
+            transition: opacity 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        @keyframes revealItem {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+                background-color: #222;
+            }
+            50% {
+                background-color: #444;
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                background-color: #222;
+            }
+        }
+
+        .reveal {
+            animation: revealItem 1s ease-in-out forwards;
+        }
+
+        .grid-item.reveal span {
+            text-shadow: 0 0 15px white, 0 0 30px white, 0 0 50px white, 0 0 70px white;
+        }
+
+        @keyframes removeItem {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                background-color: #222;
+            }
+            50% {
+                background-color: #444;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+                background-color: #222;
+            }
+        }
+
+        .remove {
+            animation: removeItem 1s ease-in-out forwards;
+        }
+
+        .grid-item.remove span {
+            text-shadow: none;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .nav-link {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 20px;
+            font-size: 1.3em;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 5px;
+            transition: color 0.4s ease, transform 0.3s ease;
+        }
+
+        .nav-link:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #f39c12;
+            transition: width 0.4s ease;
+        }
+
+        .nav-link:hover {
+            color: #f39c12;
+            transform: translateY(-5px);
+        }
+
+        .nav-link:hover:before {
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="grid-container" id="grid"></div>
+
+    <div class="navigation">
+        <a href="https://simplesoft.co.in/images" class="nav-link">Image Editing</a>
+    </div>
+
+    <script>
+        const gridContainer = document.getElementById('grid');
+        
+        let cols = 10;
+        let rows = 10;
+        const totalCells = cols * rows;
+
+        const customText = {
+            42: 'S',
+            43: 'I',
+            44: 'M',
+            45: 'P',
+            46: 'L',
+            47: 'E',
+            51: 'S',
+            52: 'O',
+            53: 'F',
+            54: 'T',
+            55: 'W',
+            56: 'A',
+            57: 'R',
+            58: 'E',
+        };
+
+        function generateGrid() {
+            gridContainer.innerHTML = '';
+            for (let i = 0; i < totalCells; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.classList.add('grid-item');
+                const span = document.createElement('span');
+                span.textContent = '';
+                gridItem.appendChild(span);
+                gridContainer.appendChild(gridItem);
+            }
+        }
+
+        function generateSpiralPath(rows, cols) {
+            const path = [];
+            let left = 0, right = cols - 1, top = 0, bottom = rows - 1;
+            const centerX = Math.floor(cols / 2);
+            const centerY = Math.floor(rows / 2);
+            while (left <= right && top <= bottom) {
+                for (let i = left; i <= right; i++) {
+                    path.push(top * cols + i);
+                }
+                top++;
+                for (let i = top; i <= bottom; i++) {
+                    path.push(i * cols + right);
+                }
+                right--;
+                if (top <= bottom) {
+                    for (let i = right; i >= left; i--) {
+                        path.push(bottom * cols + i);
+                    }
+                    bottom--;
+                }
+                if (left <= right) {
+                    for (let i = bottom; i >= top; i--) {
+                        path.push(i * cols + left);
+                    }
+                    left++;
+                }
+            }
+            return path;
+        }
+
+        function animateGrid(spiralPath, reverse = false, callback) {
+            const animationOrder = reverse ? spiralPath.reverse() : spiralPath;
+            animationOrder.forEach((index, idx) => {
+                const gridItem = gridContainer.children[index];
+                const span = gridItem.querySelector('span');
+                if (customText[index]) {
+                    span.textContent = customText[index];
+                }
+                setTimeout(() => {
+                    if (reverse) {
+                        gridItem.classList.remove('reveal');
+                        gridItem.classList.add('remove');
+                    } else {
+                        gridItem.classList.add('reveal');
+                    }
+                    gridItem.style.transitionDelay = `${idx * 100}ms`;
+                }, idx * 100);
+            });
+            setTimeout(callback, animationOrder.length * 100);
+        }
+
+        function loopGrid() {
+            generateGrid();
+            const spiralPath = generateSpiralPath(rows, cols);
+            animateGrid(spiralPath, false, () => {
+                setTimeout(() => {
+                    animateGrid(spiralPath, true, () => {
+                        setTimeout(loopGrid, 500);
+                    });
+                }, 1000);
+            });
+        }
+
+        window.addEventListener('load', loopGrid);
+        window.addEventListener('resize', () => {
+            loopGrid();
+        });
+
+    </script>
+
+</body>
+</html>
